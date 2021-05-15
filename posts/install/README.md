@@ -1,9 +1,15 @@
-# Naver Pinpoint Node Agent 설치
+# Naver Pinpoint APM Node 버전 설치하기
+
 
 ## HBase 설치
 
 [hbase 아카이브](https://archive.apache.org/dist/hbase)
 
+![hbase1](./images/hbase1.png)
+
+![hbase2](./images/hbase2.png)
+
+![hbase3](./images/hbase3.png)
 
 ```bash
 wget https://archive.apache.org/dist/hbase/1.2.7/hbase-1.2.7-bin.tar.gz

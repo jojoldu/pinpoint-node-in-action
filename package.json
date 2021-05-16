@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "local": "nodemon ./bin/www"
   },
   "dependencies": {
     "axios": "^0.21.1",
@@ -14,5 +15,8 @@
     "jade": "^1.11.0",
     "morgan": "~1.9.1",
     "pinpoint-node-agent": "^0.8.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }

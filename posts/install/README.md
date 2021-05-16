@@ -77,3 +77,7 @@ npm install --save pinpoint-node-agent
 yarn add pinpoint-node-agent
 ```
 
+## 사용법
+
+### 불필요한 Trace 대상 제거
+

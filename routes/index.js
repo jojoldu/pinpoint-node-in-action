@@ -51,7 +51,7 @@ function stop(sec) {
 
 router.get('/5',  () => {
     console.log('call: /5');
-    throw 'Exception만 던진다';
+    throw new Error('Exception만 던진다');
 });
 
 router.get('/6', (req, res, next) => {

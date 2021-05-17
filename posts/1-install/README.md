@@ -148,13 +148,24 @@ wget https://github.com/pinpoint-apm/pinpoint/releases/download/v2.2.2/pinpoint-
 chmod +x pinpoint-collector-boot-2.2.2.jar
 ```
 
+그리고 바로 jar를 실행합니다.
+
 ```bash
 nohup java -jar -Dpinpoint.zookeeper.address=localhost pinpoint-collector-boot-2.2.2.jar >/dev/null 2>&1 &
 ```
 
 * `nohup ~ >/dev/null 2>&1 &`
   * `nohup.out` 로그 파일 생성 없이, 세션 종료 없이 백그라운드 실행을 위해 사용합니다.
- 
+* `-Dpinpoint.zookeeper.address=localhost`
+  * 원래는 분산된 Hbase의 zookeeper 주소를 써야하지만, 여기서는 다 같은 EC2 안에 있으니 `localhost`를 사용합니다.
+
+Collector 설치가 끝났으니 바로 Web 설치를 진행하겠습니다.
+
+### 2-2. Web 설치
+
+Web설치는 Collector와 거의 동일한데요.  
+다운받은 Jar 파일 주소만 다를뿐이지 그 외에는 완전히 동일합니다.  
+
 ```bash
 wget https://github.com/pinpoint-apm/pinpoint/releases/download/v2.2.2/pinpoint-web-boot-2.2.2.jar
 ```
@@ -167,7 +178,20 @@ chmod +x pinpoint-web-boot-2.2.2.jar
 nohup java -jar -Dpinpoint.zookeeper.address=localhost pinpoint-web-boot-2.2.2.jar >/dev/null 2>&1 &
 ```
 
-## 3. Node-Agenet 설치
+자 이제 Pinpoint Agent 를 제외하고 모든 것이 설치되었습니다.  
+
+## 3. Node Agent 설치
+
+이제 이렇게 구성된 Pinpoint 환경에 Node Agent를 연결해볼텐데요.  
+  
+일반적으로는 Node 프로젝트가 실행되는 EC2에서 해야겠지만, 여기서는 테스트이니 로컬 PC에서 진행하겠습니다.
+
+### 3-1. 프로젝트에 Agent 추가
+
+먼저 Pinpoint로 모니터링하고 싶은 프로젝트에 [pinpoint-node-agent](https://www.npmjs.com/package/pinpoint-node-agent)를 설치합니다.
+
+
+> 모든 코드는 [Github](https://github.com/jojoldu/pinpoint-node-in-action)에 있습니다.
 
 ```bash
 npm install --save pinpoint-node-agent 
@@ -177,37 +201,75 @@ npm install --save pinpoint-node-agent
 yarn add pinpoint-node-agent
 ```
 
-## 사용법
+패키지가 설치되셨으면 **애플리케이션 entiry 지점 최상단**에 패키지를 `import` 혹은 `require` 시킵니다.
 
-### 불필요한 Trace 대상 제거
+![app](./images/app.png)
 
-## 장/단점 및 개인적인 생각
+ES6
 
-장점
+```javascript
+import 'pinpoint-node-agent'  
+```
 
-* 모든 APM 중에 가장 디텍팅에 최적화된 UX
-* 핀포인트 특유의 장점
-  * 별도의 로그를 남기지 않다고 모니터링이 가능
-* Slow URL에 대한 빠른 디텍팅 가능
-* Redis / MongoDB 
+CommonJS
 
+```javascript
+require('pinpoint-node-agent')
+```
 
-단점
+이렇게 하면 이제 이 프로젝트에서는 Pinpoint Node Agent를 실행시킬 수 있는 환경이 되었습니다.
 
-* JVM 계열의 여러 기능들 중 일부만 지원한다.
-* function 단위 Trace 지원이 안된다.
-  * 즉, 여러 function들이 실행될때 어느 function 중에서 처리가 오래 걸렸는지 추적이 안된다.
-* PostgreSQL , MySQL 등 RDBMS 지원이 안된다.
-* Express에서 직접 statusCode를 5xx로 변경하면 failed로 판단하지 않는다
+### 3-2. 프로젝트 실행
 
-핀포인트 노드는 완전히 앞단 (흔히 말하는 [프론트 서버](https://www.youtube.com/watch?v=38cmd_fYwQk): 웹프론트가 아니라, 서비스 제일 앞단에서 트래픽을 받아주고 적절하게 다른 API들을 호출하는 역할) 서비스에 중점을 맞춘 APM이라고 판단하게 되었습니다.  
+Pinpoint Node Agent를 실행시키기 위해서는 3가지 설정이 필수인데요.  
+
+* `PINPOINT_APPLICATION_NAME`
+  * Pinpoint에 연결된 많은 프로젝트들 중, 이 프로젝트를 구분짓기 위한 ID
+  * 스케일아웃하여 여러 EC2로 구성되어있더라도 같은 프로젝트라면 이 값을 모두 같은 값으로 둔다.
+* `PINPOINT_AGENT_ID`
+  * 같은 `PINPOINT_APPLICATION_NAME` 내에서 각 서버들을 구분하기 위한 ID
+  * 보통은 서버 IP를 지정합니다.
+* `PINPOINT_COLLECTOR_IP`
+
+이 3개 값은 필수라서 환경변수 (Environment Variable)로 꼭 지정해야 합니다.  
   
-실제로 이 Node Agent를 만든 네이버 쇼핑 역시 자바&스프링으로 백엔드 API를 만들고, 이 API를 Node Server에서 호출하는 구조로 사용하고 있습니다.  
-(Node Server가 서버렌더링 / API Aggregate 역할)
+그리고 이 외에 필수는 아니지만, **이번 시간에는 필수**로 지정되야 할 값이 바로 `PINPOINT_SAMPLING_RATE` 입니다.
 
-![naver1](./images/naver1.png)
+* `PINPOINT_SAMPLING_RATE`
+  * 대량의 트래픽을 모두 추적할 것인지, 그 중 일부만 샘플링해서 추적할 것인지 판단합니다. (네이버의 몇몇 서비스들은 하루에 20억건 요청이 오다보니 이를 다 추적하는것은 비용낭비가 심하여 10% 이내만 샘플링해서 본다고 합니다.)
+  * 샘플링 %는 (1/`PINPOINT_SAMPLING_RATE`) 공식으로 진행됩니다.
+  * 즉, `PINPOINT_SAMPLING_RATE`의 값을 10으로 하게 되면 1/10이 되어 10%만 샘플링, `PINPOINT_SAMPLING_RATE`를 1로 두게되면 1/1이 되어 100% 추적이 됩니다.
 
-![naver2](./images/naver2.png)
+이 값은 기본값이 10인데, 이렇게 될 경우 10%만 샘플링하게 되니, 테스트에서는 100% 추적하기 위해 1로 변경합니다.  
+  
+이렇게 4가지의 환경 변수를 로컬 실행시에 적용해야하니 각자 실행 환경에 맞게 환경 변수에 넣어주시면 됩니다.  
+  
+저는 로컬 개발을 위해 [nodemon](https://www.npmjs.com/package/nodemon)을 사용하고 있어, `nodemon.json`에 해당 변수들을 넣어서 사용하겠습니다.
 
-> 핀포인트는 같은 Collector Server로 요청을 보내면 agent들간의 처리내역을 이어서 볼 수 있습니다.
+```javascript
+{
+  "env": {
+    "PINPOINT_COLLECTOR_IP":"ec2 ip",
+    "PINPOINT_SAMPLING_RATE":"1",
+    "PINPOINT_APPLICATION_NAME":"pinpoint-node",
+    "PINPOINT_AGENT_ID": "local"
+  }
+}
+```
+
+이렇게 구성이 되셨다면 한번 프로젝트를 실행해봅니다.  
+  
+실행된 프로젝트에서 몇가지 API와 페이지들을 호출해보신 뒤, Pinpoint Web 서버로 브라우저 접속을 해보시면 아래와 같이 핀포인트에 요청들이 노출되는 것을 볼 수 있습니다.
+
+![result1](./images/result1.png)
+
+우측 그래프의 점들을 드래그 해서 확인해보시면 각 요청들이 트레이스 되는 것도 보실 수 있습니다.
+
+![result2](./images/result2.png)
+
+다음 시간에는 이렇게 구성된 Pinpoint Node 환경에서 기본 사용법과 여러 설정들과 기능들을 사용해보겠습니다.
+
+
+
+
 

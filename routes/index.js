@@ -49,9 +49,13 @@ function stop(sec) {
     });
 }
 
-router.get('/5',  () => {
+router.get('/5',  (req, res) => {
+    if(!req.query.name) {
+        throw new Error('Exception만 던진다');
+    }
     console.log('call: /5');
-    throw new Error('Exception만 던진다');
+    console.log(`name: ${req.params.name}`);
+    res.render('index', {title: req.params.name});
 });
 
 router.get('/6', (req, res, next) => {

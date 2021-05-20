@@ -1,6 +1,6 @@
 # Pinpoint APM Node 사용하기
 
-[지난 시간]에 이어, 설치된 Pinpoint Node 의 기본적인 사용법과 장단점을 배워보겠습니다.  
+[지난 시간](https://jojoldu.tistory.com/573)에 이어, 설치된 Pinpoint Node 의 기본적인 사용법과 장단점을 배워보겠습니다.  
 
 ## 로컬 프로젝트에서 접근하기
 

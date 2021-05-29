@@ -2,9 +2,9 @@
 
 [지난 시간](https://jojoldu.tistory.com/573)에 이어, 설치된 Pinpoint Node 의 기본적인 사용법과 장단점을 배워보겠습니다.  
 
-## 로컬 프로젝트에서 접근하기
+## 1. 로컬 프로젝트에서 접근하기
 
-저는 로컬 개발을 위해 [nodemon](https://www.npmjs.com/package/nodemon)을 사용하고 있어, `nodemon.json`에 
+저는 로컬 개발을 위해 [nodemon](https://www.npmjs.com/package/nodemon)을 사용하고 있어, `nodemon.json`에 다음과 같이 설정을 해서 접근할 수 있습니다.
 
 ```javascript
 {
@@ -12,11 +12,12 @@
     "PINPOINT_COLLECTOR_IP":"ec2 ip",
     "PINPOINT_SAMPLING_RATE":"1",
     "PINPOINT_APPLICATION_NAME":"pinpoint-node",
-    "PINPOINT_TRACE_EXCLUSION_URL_PATTERN": "/stylesheets/*,/css/*,/favicon.ico",
     "PINPOINT_AGENT_ID": "local"
   }
 }
 ```
+
+> 물론 Pinpoint Collector의 방화벽 (Security Group) 에 현재 로컬 PC의 IP가 **인바운드에 등록** (포트: 9991 ~ 9993) 되어 있어야 합니다.
 
 
 ## 대시보드 기능
@@ -30,6 +31,16 @@
 ![filter2](./images/filter2.png)
 
 ### 불필요한 Trace 대상 제거
+
+```javascript
+{
+  "env": {
+    ...
+    "PINPOINT_TRACE_EXCLUSION_URL_PATTERN": "/stylesheets/*,/css/*,/favicon.ico",
+    ...
+  }
+}
+```
 
 ## 개인적인 의견
 
@@ -48,6 +59,7 @@
 * JVM 계열의 여러 기능들 중 일부만 지원한다.
 * function 단위 Trace 지원이 안된다.
   * 여러 function들이 실행될때 어느 function 에서 처리가 오래 걸렸는지, 에러가 발생했는지 추적이 안된다.
+  * 이는 [0.9.0 버전에 도입](https://github.com/pinpoint-apm/pinpoint-node-agent/issues/2)된다고 합니다.
 * PostgreSQL 등 MySQL을 제외한 RDBMS 지원이 안된다.
 * Redis, MongoDB는 일부 패키지만 지원한다.
   * Redis는 ioredis만, MongoDB는 mongodb-core만 지원한다.
